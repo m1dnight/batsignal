@@ -1,0 +1,8 @@
+build
+.vscode
+release/
+sdkconfig.defaultssdkconfig
+sdkconfig.defaults
+sdkconfig
+sdkconfig
+sdkconfig.old
