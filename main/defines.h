@@ -1,6 +1,9 @@
 #ifndef __defines
 #define __defines
 
+// service parameters (available on both)
+#define SERVER_PORT 8080
+
 #define BATBUTTON
 
 // client parameters

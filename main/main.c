@@ -23,6 +23,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "driver/gpio.h"
+#include "batsignal_client.h"
 
 #define TAG "main"
 
@@ -55,7 +56,7 @@ void buttonPushedTask(void *params)
 
             // do our button logic here
             printf("GPIO %d was pressed %d times. The state is %d\n", pinNumber, count++, gpio_get_level(PIN_SWITCH));
-
+            send_command("ring");
             // enable the interrupt again
             gpio_isr_handler_add(PIN_SWITCH, gpio_isr_handler, (void *)PIN_SWITCH);
         }
@@ -76,31 +77,41 @@ void init_button()
     gpio_isr_handler_add(PIN_SWITCH, gpio_isr_handler, (void *)PIN_SWITCH);
 }
 
-void app_main(void)
+void init_batsignal()
 {
-#ifdef BATSIGNAL
     init_led();
     set_color(0, 0, 0, 0);
+
+    // initialize batsignal server
+    initialise_batsignal_server();
+}
+
+void init_batbutton()
+{
+    init_button();
+}
+
+void app_main(void)
+{
+    // initialize storage
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ESP_ERROR_CHECK(nvs_flash_init());
+    }
+
+    // connect to wifi
+    initialise_wifi();
+
+    // initialize mdns service
+    initialise_mdns();
+
+#ifdef BATSIGNAL
+    init_batsignal();
 #endif
 
 #ifdef BATBUTTON
-    init_button();
+    init_batbutton();
 #endif
-
-    // // initialize storage
-    // esp_err_t ret = nvs_flash_init();
-    // if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    // {
-    //     ESP_ERROR_CHECK(nvs_flash_erase());
-    //     ESP_ERROR_CHECK(nvs_flash_init());
-    // }
-
-    // // connect to wifi
-    // initialise_wifi();
-
-    // // initialize mdns service
-    // initialise_mdns();
-
-    // // initialize batsignal server
-    // initialise_batsignal_server();
 }

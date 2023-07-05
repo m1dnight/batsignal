@@ -15,17 +15,17 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 #include "lamp.h"
+#include "defines.h"
 
-#define PORT 8080
 #define KEEPALIVE_IDLE 5
 #define KEEPALIVE_INTERVAL 5
 #define KEEPALIVE_COUNT 3
 
-const char *TAG = "socket server";
+const char *TAGG = "socket server";
 
 static void handle_command(const char *command)
 {
-    ESP_LOGI(TAG, "command '%s'", command);
+    ESP_LOGI(TAGG, "command '%s'", command);
     if (strcmp(command, "ring") == 0)
     {
         ring();
@@ -33,7 +33,7 @@ static void handle_command(const char *command)
     /* more else if clauses */
     else /* default: */
     {
-        ESP_LOGI(TAG, "unknown command '%s'", command);
+        ESP_LOGI(TAGG, "unknown command '%s'", command);
     }
 }
 static void handle_connection(const int sock)
@@ -46,18 +46,18 @@ static void handle_connection(const int sock)
         len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
         if (len < 0)
         {
-            ESP_LOGE(TAG, "error occurred during receiving: errno %d", errno);
+            ESP_LOGE(TAGG, "error occurred during receiving: errno %d", errno);
             break;
         }
 
         if (len == 0)
         {
-            ESP_LOGW(TAG, "connection closed");
+            ESP_LOGW(TAGG, "connection closed");
             break;
         }
 
         rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
-        ESP_LOGI(TAG, "received %d bytes: %s", len, rx_buffer);
+        ESP_LOGI(TAGG, "received %d bytes: %s", len, rx_buffer);
         handle_command(rx_buffer);
 
         // send() can return less bytes than supplied length.
@@ -68,7 +68,7 @@ static void handle_connection(const int sock)
             int written = send(sock, rx_buffer + (len - to_write), to_write, 0);
             if (written < 0)
             {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                ESP_LOGE(TAGG, "Error occurred during sending: errno %d", errno);
             }
             to_write -= written;
         }
@@ -91,14 +91,14 @@ static void tcp_server_task(void *pvParameters)
         struct sockaddr_in *dest_addr_ip4 = (struct sockaddr_in *)&dest_addr;
         dest_addr_ip4->sin_addr.s_addr = htonl(INADDR_ANY);
         dest_addr_ip4->sin_family = AF_INET;
-        dest_addr_ip4->sin_port = htons(PORT);
+        dest_addr_ip4->sin_port = htons(SERVER_PORT);
         ip_protocol = IPPROTO_IP;
     }
 
     int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
     if (listen_sock < 0)
     {
-        ESP_LOGE(TAG, "unable to create socket: errno %d", errno);
+        ESP_LOGE(TAGG, "unable to create socket: errno %d", errno);
         vTaskDelete(NULL);
         return;
     }
@@ -106,35 +106,35 @@ static void tcp_server_task(void *pvParameters)
     int opt = 1;
     setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    ESP_LOGI(TAG, "socket created");
+    ESP_LOGI(TAGG, "socket created");
 
     int err = bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (err != 0)
     {
-        ESP_LOGE(TAG, "socket unable to bind: errno %d", errno);
-        ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
+        ESP_LOGE(TAGG, "socket unable to bind: errno %d", errno);
+        ESP_LOGE(TAGG, "IPPROTO: %d", addr_family);
         goto cleanup;
     }
 
-    ESP_LOGI(TAG, "socket bound, port %d", PORT);
+    ESP_LOGI(TAGG, "socket bound, port %d", SERVER_PORT);
 
     err = listen(listen_sock, 1);
     if (err != 0)
     {
-        ESP_LOGE(TAG, "error occurred during listen: errno %d", errno);
+        ESP_LOGE(TAGG, "error occurred during listen: errno %d", errno);
         goto cleanup;
     }
 
     while (1)
     {
-        ESP_LOGI(TAG, "socket listening");
+        ESP_LOGI(TAGG, "socket listening");
 
         struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
         socklen_t addr_len = sizeof(source_addr);
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0)
         {
-            ESP_LOGE(TAG, "unable to accept connection: errno %d", errno);
+            ESP_LOGE(TAGG, "unable to accept connection: errno %d", errno);
             break;
         }
 
@@ -150,7 +150,7 @@ static void tcp_server_task(void *pvParameters)
             inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
         }
 
-        ESP_LOGI(TAG, "ocket accepted ip address: %s", addr_str);
+        ESP_LOGI(TAGG, "ocket accepted ip address: %s", addr_str);
 
         handle_connection(sock);
 

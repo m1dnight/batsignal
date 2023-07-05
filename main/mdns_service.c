@@ -3,8 +3,10 @@
 
 void add_services()
 {
-    // add our services
-    mdns_service_add(NULL, "_" SERVICE, "_tcp", 8080, NULL, 0);
+// add our services
+#ifdef BATSIGNAL
+    mdns_service_add(NULL, "_" SERVICE, "_tcp", SERVER_PORT, NULL, 0);
+#endif
 }
 
 void initialise_mdns()
