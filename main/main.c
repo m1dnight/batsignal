@@ -53,65 +53,30 @@ void init_batsignal()
 
 void init_batbutton() { init_button(); }
 
-RTC_DATA_ATTR int timesWokenUp = 0;
-
-char *mac_to_str(char *buffer, uint8_t *mac)
-{
-    sprintf(buffer, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    return buffer;
-}
-
-// feather 0c:dc:7e:cb:22:b0
-// esp     54:43:b2:51:d0:e8
-
 uint8_t mac_btn[6] = {0x0c, 0xdc, 0x7e, 0xcb, 0x22, 0xb0};
 uint8_t mac_lmp[6] = {0x54, 0x43, 0xb2, 0x51, 0xd0, 0xe8};
 
-void on_sent(const uint8_t *mac_addr, esp_now_send_status_t status)
+bool is_lamp()
 {
-    char buffer[13];
-    switch (status) {
-    case ESP_NOW_SEND_SUCCESS:
-        ESP_LOGI(TAG, "message sent to %s", mac_to_str(buffer, (uint8_t *)mac_addr));
-        break;
-    case ESP_NOW_SEND_FAIL:
-        ESP_LOGE(TAG, "message sent to %s failed", mac_to_str(buffer, (uint8_t *)mac_addr));
-        break;
+    uint8_t this_mac[6];
+    get_current_mac(this_mac);
+    char mac_str[13];
+    mac_to_str(mac_str, this_mac);
+
+    if (memcmp(this_mac, mac_btn, 6) == 0) {
+        ESP_LOGI(TAG, "this is the button");
+        return false;
     }
-}
-
-void on_receive(const uint8_t *mac_addr, const uint8_t *data, int data_len)
-{
-    char buffer[13];
-    ESP_LOGI(TAG, "got message from %s", mac_to_str(buffer, (uint8_t *)mac_addr));
-
-    printf("message: %.*s\n", data_len, data);
+    else if (memcmp(this_mac, mac_lmp, 6) == 0) {
+        ESP_LOGI(TAG, "this is the lamp");
+        return true;
+    }
+    ESP_LOGE(TAG, "this not a lamp or a button");
+    return false;
 }
 
 void app_main(void)
 {
-
-    uint8_t this_mac[6];
-    esp_efuse_mac_get_default(this_mac);
-    char     mac_str[13];
-    uint8_t *peer_mac = mac_btn;
-    mac_to_str(mac_str, this_mac);
-    ESP_LOGI(TAG, "mac address: '%s'", mac_str);
-
-    bool lamp = false;
-    if (memcmp(this_mac, mac_btn, 6) == 0) {
-        ESP_LOGI(TAG, "this is the button");
-        peer_mac = mac_lmp;
-    }
-    else if (memcmp(this_mac, mac_lmp, 6) == 0) {
-        ESP_LOGI(TAG, "this is the lamp");
-        peer_mac = mac_btn;
-        lamp = true;
-    }
-    else {
-        ESP_LOGI(TAG, "this is neither the button nor the lamp");
-    }
-
     // initialize storage
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -119,25 +84,12 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
-    // init the wifi
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_start());
-
-    ESP_ERROR_CHECK(esp_now_init());
-    ESP_ERROR_CHECK(esp_now_register_send_cb(on_sent));
-    ESP_ERROR_CHECK(esp_now_register_recv_cb(on_receive));
-
-    esp_now_peer_info_t peer;
-    memset(&peer, 0, sizeof(esp_now_peer_info_t));
-    memcpy(peer.peer_addr, peer_mac, 6);
-
-    esp_now_add_peer(&peer);
-
+    if (is_lamp()) {
+        add_peer(mac_btn);
+    }
+    else {
+        add_peer(mac_lmp);
+    }
     if (!lamp) {
 
         char send_buffer[250];

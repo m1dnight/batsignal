@@ -9,4 +9,10 @@
 
 void initialise_wifi(void);
 
+void deinitalise_wifi(void);
+
+void get_current_mac(uint8_t *mac);
+
+void add_peer(uint8_t *mac);
+
 #endif
