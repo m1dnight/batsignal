@@ -43,10 +43,7 @@
 
 #define TAG "main"
 
-void init_batsignal()
-{
-    init_led();
-}
+void init_batsignal() { init_led(); }
 
 // void init_batbutton() { init_button(); }
 
@@ -95,20 +92,9 @@ void app_main(void)
     }
 
     // the button should power on and then go to sleep.
-    // when the button is pressed the button should wake up and send a message to the lamp.
+    // when the button is pressed the button should wake up
+    // and send a message to the lamp.
     if (!lamp) {
-
-        // esp_sleep_enable_timer_wakeup(5 * 1000000);
-
-        // ESP_LOGI(TAG, "button going to sleep");
-
-        // sleep_wifi();
-
-        // // wait for serial to flush
-        // uart_tx_wait_idle(CONFIG_ESP_CONSOLE_UART_NUM);
-        // esp_deep_sleep_start();
-
-        // debug loop to wake up every 5 seconds
         esp_sleep_enable_timer_wakeup(5 * 1000000);
         while (1) {
             printf("woke up from sleep\n");
