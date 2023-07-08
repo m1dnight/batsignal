@@ -46,12 +46,9 @@
 void init_batsignal()
 {
     init_led();
-
-    // initialize batsignal server
-    initialise_batsignal_server();
 }
 
-void init_batbutton() { init_button(); }
+// void init_batbutton() { init_button(); }
 
 uint8_t mac_btn[6] = {0x0c, 0xdc, 0x7e, 0xcb, 0x22, 0xb0};
 uint8_t mac_lmp[6] = {0x54, 0x43, 0xb2, 0x51, 0xd0, 0xe8};
@@ -77,6 +74,7 @@ bool is_lamp()
 
 void app_main(void)
 {
+
     // initialize storage
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -84,100 +82,49 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_init());
     }
 
-    if (is_lamp()) {
-        add_peer(mac_btn);
+    bool lamp = is_lamp();
+
+    // initialize wifi
+    initialise_wifi();
+
+    if (lamp) {
+        init_batsignal();
     }
     else {
-        add_peer(mac_lmp);
+        // init_batbutton();
     }
+
+    // the button should power on and then go to sleep.
+    // when the button is pressed the button should wake up and send a message to the lamp.
     if (!lamp) {
 
-        char send_buffer[250];
+        // esp_sleep_enable_timer_wakeup(5 * 1000000);
 
-        sprintf(send_buffer, "Hello from %s message %d", mac_str, 123);
-        ESP_ERROR_CHECK(esp_now_send(NULL, (uint8_t *)send_buffer, strlen(send_buffer)));
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        // ESP_LOGI(TAG, "button going to sleep");
 
+        // sleep_wifi();
+
+        // // wait for serial to flush
+        // uart_tx_wait_idle(CONFIG_ESP_CONSOLE_UART_NUM);
+        // esp_deep_sleep_start();
+
+        // debug loop to wake up every 5 seconds
         esp_sleep_enable_timer_wakeup(5 * 1000000);
-
         while (1) {
-            printf("going for a nap\n");
+            printf("woke up from sleep\n");
+            // wake up the wifi
+            wake_up_wifi();
 
-            ESP_ERROR_CHECK(esp_now_deinit());
-            ESP_ERROR_CHECK(esp_wifi_stop());
-            uart_tx_wait_idle(CONFIG_ESP_CONSOLE_UART_NUM);
+            // readd all the peers after sleep
+            add_peer(mac_lmp);
 
-            esp_light_sleep_start();
+            send_message("ring");
 
-            printf("woke up\n");
-            ESP_ERROR_CHECK(esp_wifi_start());
+            printf("going back to sleep\n");
 
-            ESP_ERROR_CHECK(esp_now_init());
+            sleep_wifi();
 
-            esp_now_peer_info_t peer;
-            memset(&peer, 0, sizeof(esp_now_peer_info_t));
-            memcpy(peer.peer_addr, peer_mac, 6);
-
-            esp_now_add_peer(&peer);
-
-            char send_buffer[250];
-
-            sprintf(send_buffer, "Hello from %s message %d", mac_str, 123);
-            ESP_ERROR_CHECK(esp_now_send(NULL, (uint8_t *)send_buffer, strlen(send_buffer)));
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            esp_deep_sleep_start();
         }
     }
-    //     // connect to wifi
-    //     initialise_wifi();
-
-    //     // initialize mdns service
-    //     initialise_mdns();
-
-    // #ifdef BATSIGNAL
-    //     ESP_LOGI(TAG, "batsignal");
-    //     init_batsignal();
-    // #endif
-
-    //     // #ifdef BATBUTTON
-    //     //     ESP_LOGI(TAG, "batbutton");
-    //     //     init_batbutton();
-    //     // #endif
-
-    // esp_sleep_enable_timer_wakeup(500000000);
-    // esp_light_sleep_start();
-
-    //     while (true) {
-    //         // if the button is pressed, wait for it to be released before going on.
-    //         if (rtc_gpio_get_level(PIN_SWITCH) == 0) {
-    //             printf("please release button\n");
-    //             do {
-    //                 vTaskDelay(pdMS_TO_TICKS(10));
-    //             } while (rtc_gpio_get_level(PIN_SWITCH) == 0);
-    //         }
-
-    //         esp_wifi_stop();
-    //         printf("going for a nap\n");
-    //         uart_tx_wait_idle(CONFIG_ESP_CONSOLE_UART_NUM);
-
-    //         int64_t before = esp_timer_get_time();
-
-    //         esp_light_sleep_start();
-
-    //         // connect to wifi
-    //         // initialise_wifi();
-    //         esp_wifi_start();
-    //         esp_wifi_connect();
-
-    //         // initialize mdns service
-    //         initialise_mdns();
-
-    //         // when waking up, do the following.
-    //         send_command("ring");
-
-    //         int64_t after = esp_timer_get_time();
-
-    //         esp_sleep_wakeup_cause_t reason = esp_sleep_get_wakeup_cause();
-
-    //         printf("napped for %lld, reason was %s\n", (after - before) / 1000, reason == ESP_SLEEP_WAKEUP_TIMER ? "timer" : "button");
-    //     }
 }

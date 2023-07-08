@@ -8,32 +8,28 @@
 #include "nvs_flash.h"
 #include <string.h>
 
+#include "esp32/rom/uart.h"
+#include "esp_mac.h"
+#include "esp_now.h"
+#include "esp_wifi.h"
+
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "wifi.h"
 
+#include "batcommand.h"
+
+#define TAG "wifi"
+
 /// @brief converts a mac address to a string.
-void mac_to_str(char *buffer, uint8_t *mac)
+char *mac_to_str(char *buffer, uint8_t *mac)
 {
     sprintf(buffer, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    return;
+    return buffer;
 }
 
 /// @brief returns the mac address of this device in a buffer.
-void get_current_mac(uint8_t *mac)
-{
-    uint8_t this_mac[6];
-    esp_efuse_mac_get_default(this_mac);
-}
-
-{
-    uint8_t this_mac[6];
-    esp_efuse_mac_get_default(this_mac);
-    char     mac_str[13];
-    uint8_t *peer_mac = mac_btn;
-    mac_to_str(mac_str, this_mac);
-    ESP_LOGI(TAG, "mac address: '%s'", mac_str);
-}
+void get_current_mac(uint8_t *mac) { esp_efuse_mac_get_default(mac); }
 
 /// @brief callback when a message was sent.
 void on_sent(const uint8_t *mac_addr, esp_now_send_status_t status)
@@ -50,16 +46,20 @@ void on_sent(const uint8_t *mac_addr, esp_now_send_status_t status)
 }
 
 /// @brief callback when a message was received.
-void on_receive(const uint8_t *mac_addr, const uint8_t *data, int data_len)
+void on_receive(const esp_now_recv_info_t *esp_now_info, const uint8_t *data, int data_len)
 {
-    char buffer[13];
+    uint8_t *mac_addr = esp_now_info->src_addr;
+    char     buffer[13];
     ESP_LOGI(TAG, "got message from %s", mac_to_str(buffer, (uint8_t *)mac_addr));
 
     printf("message: %.*s\n", data_len, data);
+    handle_command((char *)data);
 }
 
 void add_peer(uint8_t *mac)
 {
+    printf("adding peer: %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    fflush(stdout);
     esp_now_peer_info_t peer;
     memset(&peer, 0, sizeof(esp_now_peer_info_t));
     memcpy(peer.peer_addr, mac, 6);
@@ -70,8 +70,7 @@ void add_peer(uint8_t *mac)
 void send_message(const char *message)
 {
     char buffer[250];
-
-    sprintf(buffer, "ring ring motherfucker");
+    sprintf(buffer, message);
     ESP_ERROR_CHECK(esp_now_send(NULL, (uint8_t *)buffer, strlen(buffer)));
 }
 
@@ -92,7 +91,13 @@ void initialise_wifi(void)
     ESP_ERROR_CHECK(esp_now_register_recv_cb(on_receive));
 }
 
-void deinitalise_wifi(void)
+void wake_up_wifi()
+{
+    ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_now_init());
+}
+
+void sleep_wifi()
 {
     ESP_ERROR_CHECK(esp_now_deinit());
     ESP_ERROR_CHECK(esp_wifi_stop());
