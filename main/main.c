@@ -39,7 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// button sleep
+// count the boot times to know when its a cold boot
+RTC_DATA_ATTR int boot_count = 0;
 
 #define TAG "main"
 
@@ -88,30 +89,41 @@ void app_main(void)
     if (lamp) {
         init_batsignal();
     }
-    else {
+
+    if (!lamp) {
         init_batbutton();
     }
 
-    // // the button should power on and then go to sleep.
-    // // when the button is pressed the button should wake up
-    // // and send a message to the lamp.
-    // if (!lamp) {
-    //     esp_sleep_enable_timer_wakeup(5 * 1000000);
-    //     while (1) {
-    //         printf("woke up from sleep\n");
-    //         // wake up the wifi
-    //         wake_up_wifi();
+    printf("boot count: %d\n", boot_count);
+    fflush(stdout);
 
-    //         // readd all the peers after sleep
-    //         add_peer(mac_lmp);
+    // the first time the button boots it will not trigger the lamp.
+    // the next times it boots it will trigger the lamp
+    // go to sleep on cold boot
+    if (!lamp && boot_count++ == 0) {
 
-    //         send_message("ring");
+        esp_deep_sleep_start();
+    }
 
-    //         printf("going back to sleep\n");
+    // the button should power on and then go to sleep.
+    // when the button is pressed the button should wake up
+    // and send a message to the lamp.
+    if (!lamp) {
+        // esp_sleep_enable_timer_wakeup(5 * 1000000);
+        // while (1) {
+        printf("woke up from sleep\n");
+        // wake up the wifi
+        wake_up_wifi();
 
-    //         sleep_wifi();
+        // readd all the peers after sleep
+        add_peer(mac_lmp);
 
-    //         esp_deep_sleep_start();
-    //     }
-    // }
+        send_message("ring");
+
+        printf("going back to sleep\n");
+
+        sleep_wifi();
+
+        esp_deep_sleep_start();
+    }
 }
