@@ -1,18 +1,16 @@
-#include "defines.h"
 #include "driver/rmt_tx.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "led_strip_encoder.h"
 #include <string.h>
+
+#include "defines.h"
+#include "led_strip_encoder.h"
 
 #define RMT_LED_STRIP_RESOLUTION_HZ 10000000
 #define EXAMPLE_CHASE_SPEED_MS      10
 
-#define TAG "Led Light"
-
-#define LED_PIN   22
-#define LED_COUNT 12
+#define TAG "lamp"
 
 static uint8_t pxls[LED_COUNT * 4];
 

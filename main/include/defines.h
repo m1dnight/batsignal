@@ -7,6 +7,10 @@
 // parameters for the button wiring
 #define PIN_SWITCH 13
 
+// led ring
+#define LED_PIN   22
+#define LED_COUNT 12
+
 // #define BATSIGNAL
 #define BATBUTTON
 

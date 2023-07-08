@@ -4,40 +4,17 @@
  * SPDX-License-Identifier: CC0-1.0
  */
 
-#include "driver/gpio.h"
-#include "esp_chip_info.h"
-#include "esp_flash.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
-#include "sdkconfig.h"
-#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "batsignal_client.h"
-#include "batsignal_server.h"
 #include "button.h"
-#include "defines.h"
 #include "lamp.h"
-#include "mdns_service.h"
 #include "wifi.h"
-
-#include "driver/rtc_io.h"
-#include "esp32/rom/uart.h"
-#include "esp_log.h"
-#include "esp_mac.h"
-#include "esp_now.h"
-#include "esp_timer.h"
-#include "esp_wifi.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "nvs_flash.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 // count the boot times to know when its a cold boot
 RTC_DATA_ATTR int boot_count = 0;
