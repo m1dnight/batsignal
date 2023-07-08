@@ -1,3 +1,45 @@
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+
+#include "defines.h"
+#include "batsignal_client.h"
+
+// xQueueHandle interruptQueue;
+QueueHandle_t interruptQueue;
+
+static void IRAM_ATTR gpio_isr_handler(void *args)
+{
+    int pinNumber = (int)args;
+    xQueueSendFromISR(interruptQueue, &pinNumber, NULL);
+}
+
+void buttonPushedTask(void *params)
+{
+    int pinNumber, count = 0;
+    while (true)
+    {
+        if (xQueueReceive(interruptQueue, &pinNumber, portMAX_DELAY))
+        {
+            // disable the interrupt to debounce
+            gpio_isr_handler_remove(pinNumber);
+
+            // wait a while for the button to be released
+            do
+            {
+                vTaskDelay(pdMS_TO_TICKS(20));
+            } while (gpio_get_level(PIN_SWITCH) == 1);
+
+            // do our button logic here
+            printf("GPIO %d was pressed %d times. The state is %d\n", pinNumber, count++, gpio_get_level(PIN_SWITCH));
+            send_command("ring");
+            // enable the interrupt again
+            gpio_isr_handler_add(PIN_SWITCH, gpio_isr_handler, (void *)PIN_SWITCH);
+        }
+    }
+}
+
 void init_button()
 {
     // gpio_pad_select_gpio(PIN_SWITCH);

@@ -4,6 +4,9 @@
 // service parameters (available on both)
 #define SERVER_PORT 8080
 
+// parameters for the button wiring
+#define PIN_SWITCH 13
+
 // #define BATSIGNAL
 #define BATBUTTON
 
@@ -14,7 +17,7 @@
 
 #define HOSTNAME "batsignal"
 #define INSTANCE "batsignal"
-#define SERVICE "batsignal"
+#define SERVICE  "batsignal"
 #endif
 
 // server parameters
@@ -24,7 +27,7 @@
 
 #define HOSTNAME "batbutton"
 #define INSTANCE "batbutton"
-#define SERVICE "batbutton"
+#define SERVICE  "batbutton"
 #endif
 
 #endif
