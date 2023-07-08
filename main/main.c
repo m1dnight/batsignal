@@ -27,7 +27,7 @@
 
 #define TAG "main"
 
-#define PIN_SWITCH 21
+#define PIN_SWITCH 13
 
 // xQueueHandle interruptQueue;
 QueueHandle_t interruptQueue;
@@ -108,10 +108,12 @@ void app_main(void)
     initialise_mdns();
 
 #ifdef BATSIGNAL
+    ESP_LOGI(TAG, "batsignal");
     init_batsignal();
 #endif
 
 #ifdef BATBUTTON
+    ESP_LOGI(TAG, "batbutton");
     init_batbutton();
 #endif
 }

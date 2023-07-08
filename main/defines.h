@@ -4,6 +4,7 @@
 // service parameters (available on both)
 #define SERVER_PORT 8080
 
+// #define BATSIGNAL
 #define BATBUTTON
 
 // client parameters
