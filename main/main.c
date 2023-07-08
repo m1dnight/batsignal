@@ -45,11 +45,12 @@
 
 void init_batsignal() { init_led(); }
 
-// void init_batbutton() { init_button(); }
+void init_batbutton() { init_button(); }
 
 uint8_t mac_btn[6] = {0x0c, 0xdc, 0x7e, 0xcb, 0x22, 0xb0};
 uint8_t mac_lmp[6] = {0x54, 0x43, 0xb2, 0x51, 0xd0, 0xe8};
 
+/// @brief returns true if this device is a lamp.
 bool is_lamp()
 {
     uint8_t this_mac[6];
@@ -88,29 +89,29 @@ void app_main(void)
         init_batsignal();
     }
     else {
-        // init_batbutton();
+        init_batbutton();
     }
 
-    // the button should power on and then go to sleep.
-    // when the button is pressed the button should wake up
-    // and send a message to the lamp.
-    if (!lamp) {
-        esp_sleep_enable_timer_wakeup(5 * 1000000);
-        while (1) {
-            printf("woke up from sleep\n");
-            // wake up the wifi
-            wake_up_wifi();
+    // // the button should power on and then go to sleep.
+    // // when the button is pressed the button should wake up
+    // // and send a message to the lamp.
+    // if (!lamp) {
+    //     esp_sleep_enable_timer_wakeup(5 * 1000000);
+    //     while (1) {
+    //         printf("woke up from sleep\n");
+    //         // wake up the wifi
+    //         wake_up_wifi();
 
-            // readd all the peers after sleep
-            add_peer(mac_lmp);
+    //         // readd all the peers after sleep
+    //         add_peer(mac_lmp);
 
-            send_message("ring");
+    //         send_message("ring");
 
-            printf("going back to sleep\n");
+    //         printf("going back to sleep\n");
 
-            sleep_wifi();
+    //         sleep_wifi();
 
-            esp_deep_sleep_start();
-        }
-    }
+    //         esp_deep_sleep_start();
+    //     }
+    // }
 }
