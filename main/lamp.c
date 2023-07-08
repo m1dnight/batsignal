@@ -124,7 +124,7 @@ void ring()
 {
     uint32_t r = 255, g = 0, b = 0, w = 0;
 
-    int pause = 200;
+    int pause = 100;
     ESP_ERROR_CHECK(rmt_transmit(led_chan, led_encoder, pxls, sizeof(pxls), &tx_config));
 
     int flickers = 10;
